@@ -93,6 +93,7 @@ namespace mapviz_plugins
     void Clear();
     void SelectFrame();
     void FrameEdited();
+    void SetPoints();
 
    private:
     Ui::draw_polygon_config ui_;

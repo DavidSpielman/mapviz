@@ -49,6 +49,8 @@
 #include <mapviz/select_frame_dialog.h>
 #include <swri_transform_util/frames.h>
 
+#include <ros/console.h>
+
 // Declare plugin
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mapviz_plugins::DrawPolygonPlugin, mapviz::MapvizPlugin)
@@ -81,6 +83,8 @@ namespace mapviz_plugins
                      SLOT(SelectFrame()));
     QObject::connect(ui_.frame, SIGNAL(editingFinished()), this,
                      SLOT(FrameEdited()));
+    QObject::connect(ui_.setpoints, SIGNAL(clicked()), this,
+                     SLOT(SetPoints()));
     QObject::connect(ui_.publish, SIGNAL(clicked()), this,
                      SLOT(PublishPolygon()));
     QObject::connect(ui_.clear, SIGNAL(clicked()), this,
@@ -144,6 +148,41 @@ namespace mapviz_plugins
   {
     vertices_.clear();
     transformed_vertices_.clear();
+  }
+
+  void DrawPolygonPlugin::SetPoints()
+  {
+      std::string current_text = ui_.points->text().toStdString();
+
+      // Vector to store the float coordinates from the tuples
+      std::vector<float> coordinates;
+
+      // Remove unwanted characters (parentheses)
+      for (char& ch : current_text) {
+          if (ch == '(' || ch == ')') {
+              ch = ' ';
+          }
+      }
+
+      // Use a stringstream to extract the coordinates
+      std::stringstream ss(current_text);
+      float point;
+      char comma;
+
+      // Extract each float point
+      while (ss >> point) {
+          coordinates.push_back(point);
+          ss >> comma; // to skip the commas and spaces
+      }
+
+      // Assign the extracted float variables to tf::Vector3 polygon vertices
+      for (size_t i = 0; i < coordinates.size(); i += 2) {
+          tf::Vector3 vertex = tf::Vector3(coordinates[i], coordinates[i+1], 0);
+          vertices_.push_back(vertex);
+      }
+
+      transformed_vertices_.resize(vertices_.size());
+
   }
 
   void DrawPolygonPlugin::PrintError(const std::string& message)
